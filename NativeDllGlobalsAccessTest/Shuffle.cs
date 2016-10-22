@@ -1,37 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NativeDllGlobalsAccessTest
 {
     // http://stackoverflow.com/a/5807238/578731
     public static class EnumerableExtensions
     {
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
+        public static IEnumerable<T> Shuffle<T>( this IEnumerable<T> source )
         {
-            return source.Shuffle(new Random());
+            return source.Shuffle( new Random() );
         }
 
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random rng)
+        public static IEnumerable<T> Shuffle<T>( this IEnumerable<T> source, Random rng )
         {
-            if ( source == null ) throw new ArgumentNullException("source");
-            if ( rng == null ) throw new ArgumentNullException("rng");
+            if (source == null) throw new ArgumentNullException( "source" );
+            if (rng == null) throw new ArgumentNullException( "rng" );
 
-            return source.ShuffleIterator(rng);
+            return source.ShuffleIterator( rng );
         }
 
         private static IEnumerable<T> ShuffleIterator<T>(
-            this IEnumerable<T> source, Random rng)
+            this IEnumerable<T> source, Random rng )
         {
             var buffer = source.ToList();
-            for ( int i = 0; i < buffer.Count; i++ )
+            for (int i = 0; i < buffer.Count; i++)
             {
                 int j = rng.Next(i, buffer.Count);
-                yield return buffer[j];
+                yield return buffer[ j ];
 
-                buffer[j] = buffer[i];
+                buffer[ j ] = buffer[ i ];
             }
         }
     }

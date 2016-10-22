@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,6 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -42,8 +44,9 @@
   <ItemGroup>
     <Compile Include="H5DLLImporter.cs" />
     <Compile Include="Methods\LazyInit.cs" />
-    <Compile Include="Methods\LazyInitInterlocked.cs" />
-    <Compile Include="Methods\StaticInitField.cs" />
+    <Compile Include="Methods\LazyInitInterlocked1.cs" />
+    <Compile Include="Methods\LazyInitInterlocked3.cs" />
+    <Compile Include="Methods\LazyInitInterlocked2.cs" />
     <Compile Include="Methods\StaticInitProperty.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 
 using herr_t = System.Int32;
 using hid_t = System.Int64;
@@ -19,37 +14,38 @@ namespace HDF5Mock
     /// </summary>
     internal abstract class H5DLLImporter
     {
-        [DllImport("hdf5.dll", EntryPoint = "H5open", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport( "hdf5.dll", EntryPoint = "H5open", CallingConvention = CallingConvention.Cdecl )]
         [SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
         public static extern herr_t H5open();
 
-        public T Read<T>(string varName)
+        public T Read<T>( string varName )
         {
             var address = this.GetAddress(varName);
-            return (T) Marshal.PtrToStructure(address, typeof(T));
+            return (T) Marshal.PtrToStructure( address, typeof( T ) );
         }
 
-        public hid_t ReadHid(string varName)
+        public unsafe hid_t ReadHid( string varName )
         {
-            var address = this.GetAddress(varName);
-            return Marshal.ReadInt64(address);
+            return *(hid_t*) this.GetAddress( varName );
         }
 
-        protected abstract IntPtr GetAddress(string varName);
+        public abstract IntPtr GetAddress( string varName );
 
-        internal static H5DLLImporter Create(string libName)
+        internal static H5DLLImporter Create( string libName )
         {
-            switch ( Environment.OSVersion.Platform )
+            switch (Environment.OSVersion.Platform)
             {
             case PlatformID.Win32NT:
             case PlatformID.Win32S:
             case PlatformID.Win32Windows:
             case PlatformID.WinCE:
-                return new H5WindowsDLLImporter(libName);
+                return new H5WindowsDLLImporter( libName );
+
             case PlatformID.Xbox:
             case PlatformID.MacOSX:
             case PlatformID.Unix:
-                return new H5UnixDllImporter(libName);
+                return new H5UnixDllImporter( libName );
+
             default:
                 break;
             }
@@ -59,60 +55,60 @@ namespace HDF5Mock
 
     internal class H5WindowsDLLImporter : H5DLLImporter
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern IntPtr LoadLibrary(string lpszLib);
+        [DllImport( "kernel32.dll", SetLastError = true )]
+        internal static extern IntPtr LoadLibrary( string lpszLib );
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern IntPtr GetModuleHandle(string lpszLib);
+        [DllImport( "kernel32.dll", SetLastError = true )]
+        internal static extern IntPtr GetModuleHandle( string lpszLib );
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+        [DllImport( "kernel32.dll", SetLastError = true )]
+        internal static extern IntPtr GetProcAddress( IntPtr hModule, string procName );
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool SetDllDirectory(string lpPathName);
+        [DllImport( "kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true )]
+        [return: MarshalAs( UnmanagedType.Bool )]
+        internal static extern bool SetDllDirectory( string lpPathName );
 
         private IntPtr hLib;
 
-        public H5WindowsDLLImporter(string libname)
+        public H5WindowsDLLImporter( string libname )
         {
             var dir = Path.GetDirectoryName(typeof(H5WindowsDLLImporter).Assembly.Location);
             var bin = Environment.Is64BitProcess ? "bin64" : "bin32";
-            SetDllDirectory(Path.Combine(dir, bin));
+            SetDllDirectory( Path.Combine( dir, bin ) );
 
-            this.hLib = GetModuleHandle(libname);
-            if ( this.hLib == IntPtr.Zero )
+            this.hLib = GetModuleHandle( libname );
+            if (this.hLib == IntPtr.Zero)
             {
-                this.hLib = LoadLibrary(libname);
-                if ( this.hLib == IntPtr.Zero )
-                    throw new Exception($"Could not load library: {Marshal.GetLastWin32Error()}");
+                this.hLib = LoadLibrary( libname );
+                if (this.hLib == IntPtr.Zero)
+                    throw new Exception( $"Could not load library: {Marshal.GetLastWin32Error()}" );
             }
 
             //H5open();
         }
 
-        protected override IntPtr GetAddress(string varName)
-        => GetProcAddress(hLib, varName);
+        public override IntPtr GetAddress( string varName )
+        => GetProcAddress( hLib, varName );
     }
 
     internal class H5UnixDllImporter : H5DLLImporter
     {
-        const int RTLD_NOW = 2; // for dlopen's flags
+        private const int RTLD_NOW = 2; // for dlopen's flags
 
-        [DllImport("libdl.so")]
-        protected static extern IntPtr dlopen(string filename, int flags);
+        [DllImport( "libdl.so" )]
+        protected static extern IntPtr dlopen( string filename, int flags );
 
-        [DllImport("libdl.so")]
-        protected static extern IntPtr dlsym(IntPtr handle, string symbol);
+        [DllImport( "libdl.so" )]
+        protected static extern IntPtr dlsym( IntPtr handle, string symbol );
 
-        [DllImport("libdl.so")]
+        [DllImport( "libdl.so" )]
         protected static extern IntPtr dlerror();
 
-        IntPtr hLib;
+        private IntPtr hLib;
 
-        public H5UnixDllImporter(string libname)
+        public H5UnixDllImporter( string libname )
         {
-            switch ( libname )
+            switch (libname)
             {
             case "hdf5.dll":
                 libname = "/usr/lib/libhdf5.so";
@@ -123,23 +119,23 @@ namespace HDF5Mock
                 break;
             }
 
-            this.hLib = dlopen(libname, RTLD_NOW);
-            if ( this.hLib == IntPtr.Zero )
+            this.hLib = dlopen( libname, RTLD_NOW );
+            if (this.hLib == IntPtr.Zero)
             {
                 throw new ArgumentException(
                     String.Format(
                         "Unable to load unmanaged module \"{0}\"",
-                        libname));
+                        libname ) );
             }
         }
 
-        protected override IntPtr GetAddress(string varName)
+        public override IntPtr GetAddress( string varName )
         {
             IntPtr address = dlsym(hLib, varName);
             IntPtr errPtr = dlerror();
-            if ( errPtr != IntPtr.Zero )
+            if (errPtr != IntPtr.Zero)
             {
-                throw new Exception("dlsym: " + Marshal.PtrToStringAnsi(errPtr));
+                throw new Exception( "dlsym: " + Marshal.PtrToStringAnsi( errPtr ) );
             }
             return address;
         }
