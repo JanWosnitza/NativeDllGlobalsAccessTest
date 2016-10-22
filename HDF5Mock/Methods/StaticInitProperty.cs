@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 using hid_t = System.Int64;
 
-namespace Tester.Methods
+namespace HDF5Mock.Methods
 {
-    class StaticInitProperty
+    public static class StaticInitProperty
     {
         static H5DLLImporter m_importer = H5DLLImporter.Create("hdf5.dll");
         private const hid_t HID_UNINITIALIZED = -1;

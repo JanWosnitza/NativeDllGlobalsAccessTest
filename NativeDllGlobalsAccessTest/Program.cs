@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NativeDllGlobalsAccessTest
@@ -49,13 +50,6 @@ namespace NativeDllGlobalsAccessTest
             {
                 process.StartInfo = startInfo;
 
-                /*process.OutputDataReceived += (s, e) =>
-                {
-                    using ( var output = process.StandardOutput )
-                    {
-                        text.Append(output.ReadToEnd());
-                    }
-                };*/
                 process.Start();
                 var text = process.StandardOutput.ReadToEnd();
                 process.WaitForExit();
@@ -82,6 +76,7 @@ namespace NativeDllGlobalsAccessTest
             Console.WriteLine($"    total-time  = {time1 + time2}");
             Console.WriteLine($"    access-time = {accessTime}");
             Console.WriteLine($"    initTime    = {initTime}");
+            Console.WriteLine($"    formula     = {initTime}+{accessTime}*x");
         }
     }
 
@@ -89,11 +84,14 @@ namespace NativeDllGlobalsAccessTest
     {
         static void Main(string[] args)
         {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
             // init
             //Execute<LazyInit>(10);
 
             var testNames = new []{ "LazyInit", "LazyInitInterlocked", "StaticInitProperty", "StaticInitField" };
-            var tests = testNames.Select(x => new Test(x)).ToArray();
+            var tests = testNames.SelectMany(x => new[] { new Test(x + "1"), new Test(x + "2"), new Test(x + "3") }).ToArray();
 
             var testRange =
                 Enumerable.Range(0, 20)
