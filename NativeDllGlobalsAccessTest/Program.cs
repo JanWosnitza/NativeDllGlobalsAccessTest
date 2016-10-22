@@ -11,7 +11,7 @@ namespace NativeDllGlobalsAccessTest
 {
     class Test
     {
-        const long Count1 = 10000000;
+        const long Count1 = 20000000;
         const long Count2 = Count1 * 10;
 
         public string Name;
@@ -24,13 +24,14 @@ namespace NativeDllGlobalsAccessTest
             this.Name = name;
         }
 
-        public void TestOnce()
+        public void Test1()
         {
-            var time1 = Execute(Count1);
-            var time2 = Execute(Count2);
+            Times1.Add(Execute(Count1));
+        }
 
-            Times1.Add(time1);
-            Times2.Add(time2);
+        public void Test2()
+        {
+            Times2.Add(Execute(Count2));
         }
 
         double Execute(long count)
@@ -95,17 +96,18 @@ namespace NativeDllGlobalsAccessTest
             var tests = testNames.Select(x => new Test(x)).ToArray();
 
             var testRange =
-                Enumerable.Range(0, 10)
+                Enumerable.Range(0, 20)
                     .SelectMany(x => tests)
+                    .SelectMany(x => new Action[] { x.Test1, x.Test2 })
                     .Shuffle()
                     .ToArray();
 
             for ( var i = 0; i < testRange.Length; i++ )
             {
-                Console.Write($"\rTest {i + 1}/{testRange.Length}");
-                testRange[i].TestOnce();
+                Console.Write($"\rTest {i * 100 / testRange.Length}%");
+                testRange[i]();
             }
-            Console.WriteLine();
+            Console.WriteLine("\rTest 100%");
 
             foreach ( var test in tests )
                 test.Print();
